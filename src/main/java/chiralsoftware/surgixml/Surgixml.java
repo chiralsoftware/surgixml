@@ -10,7 +10,9 @@ import picocli.CommandLine.Option;
 import java.io.FileOutputStream;
 import java.util.List;
 
+import static com.ximpleware.VTDGen.*;
 import static java.lang.System.err;
+import static java.lang.System.out;
 
 @Command(name = "surgixml", mixinStandardHelpOptions = true, version = "1.0",
         description = "Edits or inserts XML based on XPath and attribute rules.")
@@ -23,6 +25,9 @@ public final class Surgixml implements Runnable {
     // --edit-attribute="/Server/Service/Connector[@port='8080']@port=80"
     @Option(names = "--edit-attribute", arity = "1..*", description = "Edit in form: xpath@attr=value")
     List<String> edits;
+
+    @Option(names = "--add-attribute", arity = "1..*", description = "Add an attribute to a node")
+    List<String> adds;
 
     // example:
     //  --insert-after-head='/Server/Service[@name="Catalina"]:<Connector port="99"><!-- hello --></Connector>\n'
@@ -65,6 +70,7 @@ public final class Surgixml implements Runnable {
                     }
                 }
             }
+
             if(insertAfterHead != null) {
                 for (String insert : insertAfterHead) {
                     final ElementInsert elementInsert = ElementInsert.parse(insert);
@@ -103,16 +109,53 @@ public final class Surgixml implements Runnable {
                     final ElementInsert elementInsert = ElementInsert.parse(insert);
                     ap.selectXPath(elementInsert.xpath());
                     final int tokenOffset = ap.evalXPath();
-//                    final String commentText = vn.toNormalizedString(tokenOffset);
-//                    out.println("Here is the comment text i found:");
-//                    out.println(commentText);
-
                     if(tokenOffset != -1) {
+                        final String commentText = vn.toNormalizedString(tokenOffset);
+                        final int tokenType = vn.getTokenType(tokenOffset);
                         final int offset = vn.getTokenOffset(tokenOffset) + vn.getTokenLength(tokenOffset);
-                        xm.insertBytesAt(offset + 3, elementInsert.value().getBytes());
+//                        out.println("Here is the text i found with type: " + tokenType +
+//                                " which has length: " + vn.getTokenLength(tokenOffset) + " and is at character: " + offset);
+//                        out.println(commentText);
+                        final int extraOffset = switch (tokenType) {
+                            case TOKEN_COMMENT -> 3;
+                            case TOKEN_STARTING_TAG -> 1;
+                            case TOKEN_PI_NAME -> 2;
+                            default -> 1;
+                        };
+
+                        xm.insertBytesAt(offset + extraOffset, elementInsert.value().getBytes());
                     }
                 }
             }
+
+            // this works exactly like insertAfterLocation except it's going to find the last
+            // it finds the end of the list of attributes and adds there.
+            if(adds != null) {
+                for (String add : adds) {
+                    final ElementInsert elementInsert = ElementInsert.parse(add);
+                    ap.selectXPath(elementInsert.xpath());
+                    final int tokenOffset = ap.evalXPath();
+                    if(tokenOffset != -1) {
+                        final String commentText = vn.toNormalizedString(tokenOffset);
+                        final int tokenType = vn.getTokenType(tokenOffset);
+                        if(tokenType == TOKEN_STARTING_TAG) {
+                            int lastAttrOffset = -1;
+                            for(int i = tokenOffset + 1; i < vn.getTokenCount(); i++) {
+//                                out.println("i = " + i );
+                                final int nextType = vn.getTokenType(i);
+//                                out.println("i = " + i + " and nextType= " + nextType);
+                                if(nextType == TOKEN_ATTR_NAME || nextType == TOKEN_ATTR_VAL)
+                                    lastAttrOffset = vn.getTokenOffset(i) + vn.getTokenLength(i);
+                                else break;
+                            }
+
+                            if(lastAttrOffset > 0)
+                                xm.insertBytesAt(lastAttrOffset + 1, elementInsert.value().getBytes());
+                        }
+                    }
+                }
+            }
+
 
             final FileOutputStream fos = new FileOutputStream(xmlFile);
             xm.output(fos);

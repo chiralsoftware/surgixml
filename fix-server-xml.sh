@@ -21,4 +21,5 @@ EOF
   --edit-attribute="/Server/Service/Connector[@port='8080']@port=80"  \
   --edit-attribute="/Server/Service/Connector[@port='8080']@redirectPort=443"  \
   --edit-attribute="/Server/Service/Engine/Host/Valve[@directory='logs']@directory=/var/log/tomcat"  \
+  --add-attribute="//Server/Listener[@className='org.apache.catalina.core.AprLifecycleListener']: SSLEngine=\"on\" FIPSMode=\"on\""  \
   --insert-after-location="//Service/comment()[contains(., 'port=\"8443\"')]:$CONNECTOR_XML"
