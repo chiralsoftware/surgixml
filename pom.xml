@@ -13,7 +13,7 @@
     2. Generate hints:
     java -cp target/surgixml-1.0-SNAPSHOT.jar picocli.codegen.aot.graalvm.ReflectionConfigGenerator chiralsoftware.surgixml.Surgixml > reflect-config.json
     3. Native compile:
-    /usr/java/graalvm-jdk-24.0.1+9.1/bin/native-image -no-fallback -H:ReflectionConfigurationFiles=reflect-config.json -jar target/surgixml-1.0-SNAPSHOT.jar
+    /usr/java/graalvm-jdk-24.0.2+11.1/bin/native-image -no-fallback -H:ReflectionConfigurationFiles=reflect-config.json -jar target/surgixml-1.0-SNAPSHOT.jar
     Put an extra dash in front of -no-fallback above
     -->
 
@@ -53,7 +53,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.5.0</version>
+                <version>3.6.0</version>
                 <executions>
                     <execution>
                         <phase>package</phase>

@@ -43,17 +43,28 @@ public final class Surgixml implements Runnable {
     @Option(names = "--insert-after-location", arity= "1..*", description = "Insert in form: xpath:xmlFragment . Use this to insert after elements such as comments")
     List<String> insertAfterLocation;
 
+    @Option(names = "--namespace", arity = "1..*", description = "Define a namespace")
+    List<String> namespaces;
+
 
     @Override
     public void run() {
 
         final VTDGen vg = new VTDGen();
-        if (!vg.parseFile(xmlFile, false)) {
+        if (!vg.parseFile(xmlFile, namespaces != null && ! namespaces.isEmpty())) {
             err.println("Failed to parse XML.");
             return;
         }
         final VTDNav vn = vg.getNav();
         final AutoPilot ap = new AutoPilot(vn);
+        if(namespaces != null) {
+            for (String namespace : namespaces) {
+                final String prefix = namespace.substring(0, namespace.indexOf(":"));
+                final String url = namespace.substring(namespace.indexOf(":") + 1);
+                ap.declareXPathNameSpace(prefix, url);
+                System.out.println("added prefix: " + prefix + " and url: " + url);
+            }
+        }
         try {
             final XMLModifier xm = new XMLModifier(vn); // this is a buffer of accumulated changes and is valid until .output() is called
 
