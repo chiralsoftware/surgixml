@@ -46,6 +46,10 @@ public final class Surgixml implements Runnable {
     @Option(names = "--namespace", arity = "1..*", description = "Define a namespace")
     List<String> namespaces;
 
+    @Option(names = "--separator", arity = "1", description = "define a separator between xpath and value",
+    defaultValue = ":")
+    String separator;
+
 
     @Override
     public void run() {
@@ -62,7 +66,7 @@ public final class Surgixml implements Runnable {
                 final String prefix = namespace.substring(0, namespace.indexOf(":"));
                 final String url = namespace.substring(namespace.indexOf(":") + 1);
                 ap.declareXPathNameSpace(prefix, url);
-                System.out.println("added prefix: " + prefix + " and url: " + url);
+//                System.out.println("added prefix: " + prefix + " and url: " + url);
             }
         }
         try {
@@ -84,7 +88,7 @@ public final class Surgixml implements Runnable {
 
             if(insertAfterHead != null) {
                 for (String insert : insertAfterHead) {
-                    final ElementInsert elementInsert = ElementInsert.parse(insert);
+                    final ElementInsert elementInsert = ElementInsert.parse(insert, separator);
                     ap.selectXPath(elementInsert.xpath());
                     if(ap.evalXPath() != -1) {
                         xm.insertAfterHead(elementInsert.value());
@@ -97,7 +101,7 @@ public final class Surgixml implements Runnable {
             // "//Connector[@port='8080']"
             if(insertAfterElement != null) {
                 for (String insert : insertAfterElement) {
-                    final ElementInsert elementInsert = ElementInsert.parse(insert);
+                    final ElementInsert elementInsert = ElementInsert.parse(insert, separator);
                     ap.selectXPath(elementInsert.xpath());
                     if(ap.evalXPath() != -1) {
                         xm.insertAfterElement(elementInsert.value());
@@ -107,7 +111,7 @@ public final class Surgixml implements Runnable {
 
             if(insertBeforeElement != null) {
                 for (String insert : insertBeforeElement) {
-                    final ElementInsert elementInsert = ElementInsert.parse(insert);
+                    final ElementInsert elementInsert = ElementInsert.parse(insert, separator);
                     ap.selectXPath(elementInsert.xpath());
                     if(ap.evalXPath() != -1) {
                         xm.insertBeforeElement(elementInsert.value());
@@ -117,7 +121,7 @@ public final class Surgixml implements Runnable {
 
             if(insertAfterLocation != null) {
                 for (String insert : insertAfterLocation) {
-                    final ElementInsert elementInsert = ElementInsert.parse(insert);
+                    final ElementInsert elementInsert = ElementInsert.parse(insert, separator);
                     ap.selectXPath(elementInsert.xpath());
                     final int tokenOffset = ap.evalXPath();
                     if(tokenOffset != -1) {
@@ -143,7 +147,7 @@ public final class Surgixml implements Runnable {
             // it finds the end of the list of attributes and adds there.
             if(adds != null) {
                 for (String add : adds) {
-                    final ElementInsert elementInsert = ElementInsert.parse(add);
+                    final ElementInsert elementInsert = ElementInsert.parse(add, separator);
                     ap.selectXPath(elementInsert.xpath());
                     final int tokenOffset = ap.evalXPath();
                     if(tokenOffset != -1) {
